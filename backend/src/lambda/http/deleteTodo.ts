@@ -14,7 +14,6 @@ const onWarmup = (event) => console.log('I am just warming up', event)
 const todoActivities = new TodoActivities()
 
 export const handler = middy(async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
-  console.log('Processing event:', event)
 
   const todoId = event.pathParameters.todoId
 
