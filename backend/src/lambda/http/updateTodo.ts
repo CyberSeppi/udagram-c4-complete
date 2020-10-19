@@ -4,6 +4,11 @@ import { UpdateTodoRequest } from '../../requests/UpdateTodoRequest'
 import { TodoActivities } from '../../businessLogic/todos'
 import * as middy from 'middy'
 import { cors } from 'middy/middlewares'
+import { warmup } from 'middy/middlewares'
+
+
+const isWarmingUp = (event) => event.source === 'serverless-plugin-warmup'
+const onWarmup = (event) => console.log('I am just warming up', event)
 
 const todoActivities = new TodoActivities()
 
@@ -26,11 +31,13 @@ export const handler = middy(async (event: APIGatewayProxyEvent): Promise<APIGat
       updateResult
     })
   }
-})
-
-
-handler.use(
+}).use(
   cors({
     credentials: true
+  })
+).use(
+  warmup({
+    isWarmingUp,
+    onWarmup
   })
 )
