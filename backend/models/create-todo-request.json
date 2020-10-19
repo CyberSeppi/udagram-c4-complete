@@ -1,18 +1,18 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "title": "group",
+  "title": "todo",
   "type": "object",
   "properties": {
     "name": {
       "type": "string"
     },
-    "description": {
+    "dueDate": {
       "type": "string"
     }
   },
   "required": [
     "name",
-    "description"
+    "dueDate"
   ],
   "additionalProperties": false
 }
