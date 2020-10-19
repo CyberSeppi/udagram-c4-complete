@@ -7,6 +7,7 @@ plugins:
   - serverless-deployment-bucket
   - serverless-reqvalidator-plugin
   - serverless-aws-documentation
+  - serverless-plugin-warmup
 
 provider:
   name: aws
@@ -27,6 +28,12 @@ package:
   individually: true
 
 custom:
+  warmup:
+    prewarm: true
+    role: WarmUpLambdaRole
+    events:
+      - schedule: 'cron(0/5 2-23 ? * MON-FRI *)' # Run WarmUp every 5 minutes Mon-Fri between 8:00am and 5:55pm (UTC)
+      
   deploymentBucket:
     name: ${self:service.name}-${self:provider.stage}
   documentation:
@@ -46,18 +53,22 @@ custom:
 
 
 iamRoleStatements:
-    - Effect: Allow
+    # - Effect: Allow
+    #   Action:
+    #     - dynamodb:Scan
+    #     - dynamodb:PutItem
+    #     - dynamodb:GetItem
+    #   Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
+    # - Effect: Allow
+    #   Action:
+    #     - dynamodb:Query
+    #   Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}/index/${self:provider.environment.USER_ID_INDEX}
+    - Effect: 'Allow'
       Action:
-        - dynamodb:Scan
-        - dynamodb:PutItem
-        - dynamodb:GetItem
-      Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
-    - Effect: Allow
-      Action:
-        - dynamodb:Query
-      Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}/index/${self:provider.environment.USER_ID_INDEX}
+        - 'lambda:InvokeFunction'
+      Resource: "*"
 
-functions:
+functions:  
 
   Auth:
     handler: src/lambda/auth/auth0Authorizer.handler
@@ -69,6 +80,7 @@ functions:
 
   GetTodos:
     handler: src/lambda/http/getTodos.handler    
+    warmup: true
     events:
       - http:
           method: get
@@ -84,6 +96,7 @@ functions:
   # TODO: Configure this function
   CreateTodo:
     handler: src/lambda/http/createTodo.handler
+    warmup: true
     events:
       - http:
           method: post
@@ -108,6 +121,7 @@ functions:
   # TODO: Configure this function
   UpdateTodo:
     handler: src/lambda/http/updateTodo.handler
+    warmup: true
     events:
       - http:
           method: patch
@@ -133,6 +147,7 @@ functions:
   # TODO: Configure this function
   DeleteTodo:
     handler: src/lambda/http/deleteTodo.handler
+    warmup: true
     events:
       - http:
           method: delete
@@ -148,6 +163,7 @@ functions:
   # TODO: Configure this function
   GenerateUploadUrl:
     handler: src/lambda/http/generateUploadUrl.handler
+    warmup: true
     events:
       - http:
           method: post
@@ -245,3 +261,44 @@ resources:
         ValidateRequestBody: true
         ValidateRequestParameters: false
     
+
+    WarmUpLambdaRole:
+      Type: AWS::IAM::Role
+      Properties:
+        RoleName: WarmUpLambdaRole
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - lambda.amazonaws.com
+              Action: sts:AssumeRole
+        Policies:
+          - PolicyName: WarmUpPolicy
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow # Warmer lambda to send logs to CloudWatch 
+                  Action:
+                    - logs:CreateLogGroup
+                    - logs:CreateLogStream
+                    - logs:PutLogEvents
+                  Resource: 
+                    - 'Fn::Join':
+                      - ':'
+                      -
+                        - 'arn:aws:logs'
+                        - Ref: 'AWS::Region'
+                        - Ref: 'AWS::AccountId'
+                        - 'log-group:/aws/lambda/*:*:*'
+                - Effect: 'Allow' # Warmer lambda to invoke the functions to be warmed 
+                  Action:
+                    - 'lambda:InvokeFunction'
+                  Resource:
+                  - Fn::Join:
+                    - ':'
+                    - - arn:aws:lambda
+                      - Ref: AWS::Region
+                      - Ref: AWS::AccountId
+                      - function:${self:service}-${opt:stage, self:provider.stage}-*        

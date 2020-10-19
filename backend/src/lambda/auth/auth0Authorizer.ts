@@ -1,12 +1,8 @@
 import { CustomAuthorizerEvent, CustomAuthorizerResult } from 'aws-lambda'
 import 'source-map-support/register'
-
-//import { verify, decode } from 'jsonwebtoken'
 import { createLogger } from '../../utils/logger'
-// import Axios from 'axios'
-//import { Jwt } from '../../auth/Jwt'
-//import { JwtPayload } from '../../auth/JwtPayload'
 import { authenticate } from './lib'
+import * as logUtils from '../../utils/logger'
 
 const logger = createLogger('auth')
 
@@ -14,11 +10,11 @@ export const handler = async (
   event: CustomAuthorizerEvent
 ): Promise<CustomAuthorizerResult> => {
 
-  logger.info('Authorizing a user', event.authorizationToken)
+  logUtils.logInfo('auth0Authorizer','Authorizing a user', event.authorizationToken)
 
   try {
     const authResult = await authenticate(event)
-    logger.info('AuthResult', authResult)
+    logUtils.logInfo('auth0Authorizer','AuthResult', authResult)
 
     return authResult
   }

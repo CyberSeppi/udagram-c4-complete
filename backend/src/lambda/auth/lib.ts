@@ -1,10 +1,8 @@
 // With friendly support from https://github.com/auth0-samples/jwt-rsa-aws-custom-authorizer
 // THE WHOLE LIB WAS COPIED FROM THERE.
 
-import { createLogger } from '../../utils/logger'
 import { extractToken } from '../../auth/utils'
-
-const logger = createLogger('auth-lib')
+import * as logUtils from '../../utils/logger'
 
 
 const jwksClient = require('jwks-rsa');
@@ -40,8 +38,7 @@ const jwtOptions = {
 };
 
 export async function authenticate(params) {
-    console.log(params);
-    logger.info('entering function with params ', params)
+    logUtils.logInfo('AuthLib', 'AuthenticationLib (authenticate) Params', params);
     const token = getToken(params);
 
     const decoded = jwt.decode(token, { complete: true });

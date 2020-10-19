@@ -1,5 +1,5 @@
 import 'source-map-support/register'
-import { APIGatewayProxyEvent, APIGatewayProxyResult} from 'aws-lambda'
+import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
 import * as AWS from 'aws-sdk'
 import * as AWSXRay from 'aws-xray-sdk'
 import { TodoActivities } from '../../businessLogic/todos'
@@ -7,7 +7,11 @@ import * as uuid from 'uuid'
 import * as middy from 'middy'
 import { cors } from 'middy/middlewares'
 import * as logUtils from '../../utils/logger'
+import { warmup } from 'middy/middlewares'
 
+
+const isWarmingUp = (event) => event.source === 'serverless-plugin-warmup'
+const onWarmup = (event) => console.log('I am just warming up', event)
 
 
 
@@ -45,7 +49,7 @@ export const handler = middy(async (event: APIGatewayProxyEvent): Promise<APIGat
 
   try {
     const updatedTodo = await todoActivities.updateAttachmentUrl(todoId, imageId)
-    console.log('LAMBDA updatedTodo',updatedTodo)
+    console.log('LAMBDA updatedTodo', updatedTodo)
     const signedUrl = getUploadUrl(imageId)
     return {
       statusCode: 200,
@@ -57,7 +61,7 @@ export const handler = middy(async (event: APIGatewayProxyEvent): Promise<APIGat
         uploadUrl: signedUrl
       })
     }
-    
+
   } catch (e) {
     return {
       statusCode: 404,
@@ -66,7 +70,16 @@ export const handler = middy(async (event: APIGatewayProxyEvent): Promise<APIGat
       })
     }
   }
-})
+}).use(
+  cors({
+    credentials: true
+  })
+).use(
+  warmup({
+    isWarmingUp,
+    onWarmup
+  })
+)
 
 
 
@@ -78,11 +91,3 @@ function getUploadUrl(imageId: string) {
   })
 }
 
-
-
-
-handler.use(
-  cors({
-    credentials: true
-  })
-)
