@@ -5,6 +5,8 @@ import { TodoActivities } from '../../businessLogic/todos'
 import * as middy from 'middy'
 import { cors } from 'middy/middlewares'
 import { warmup } from 'middy/middlewares'
+import * as utils from '../utils'
+import * as logUtils from '../../utils/logger'
 
 
 const isWarmingUp = (event) => event.source === 'serverless-plugin-warmup'
@@ -17,11 +19,13 @@ export const handler = middy(async (event: APIGatewayProxyEvent): Promise<APIGat
 
   const todoId = event.pathParameters.todoId
   const updateRequest: UpdateTodoRequest = JSON.parse(event.body)
+  const userName = utils.getUserId(event)
+  logUtils.logInfo("createTodo lambda", "userid: ", userName)
 
   console.log('LAMBDA BEFORE GOING DOWN TO BUSINESS - todo Id: ', todoId)
   console.log('LAMBDA BEFORE GOING DOWN TO BUSINESS - updateRequest: ', updateRequest)
 
-  const updateResult = await todoActivities.updateTodo(todoId, updateRequest)
+  const updateResult = await todoActivities.updateTodo(todoId, userName, updateRequest)
 
   console.log('LAMBDA RESULT AFTER BUSINESS: ', updateResult)
 

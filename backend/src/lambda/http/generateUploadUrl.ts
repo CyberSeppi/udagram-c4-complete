@@ -8,6 +8,7 @@ import * as middy from 'middy'
 import { cors } from 'middy/middlewares'
 import * as logUtils from '../../utils/logger'
 import { warmup } from 'middy/middlewares'
+import * as utils from '../utils'
 
 
 const isWarmingUp = (event) => event.source === 'serverless-plugin-warmup'
@@ -26,10 +27,15 @@ const urlExpiration = process.env.SIGNED_URL_EXPIRATION
 const todoActivities = new TodoActivities()
 
 export const handler = middy(async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
+
+  logUtils.logInfo("generateUploadUrl lambda","Processing event: ",event)
+  const userName = utils.getUserId(event)
+  logUtils.logInfo("generateUploadUrl lambda", "userid: ", userName)
+
   const todoId = event.pathParameters.todoId
 
   logUtils.logInfo("generateUploadUrl lambda", "todoId", todoId)
-  const todoItem = await todoActivities.getTodoById(todoId)
+  const todoItem = await todoActivities.getTodoById(todoId, userName)
 
   if (!todoItem) {
     return {
@@ -48,7 +54,7 @@ export const handler = middy(async (event: APIGatewayProxyEvent): Promise<APIGat
 
 
   try {
-    const updatedTodo = await todoActivities.updateAttachmentUrl(todoId, imageId)
+    const updatedTodo = await todoActivities.updateAttachmentUrl(todoId, userName, imageId)
     console.log('LAMBDA updatedTodo', updatedTodo)
     const signedUrl = getUploadUrl(imageId)
     return {
