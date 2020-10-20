@@ -35,9 +35,9 @@ export class TodoActivities {
         return todoItems
     }
 
-    async getTodoById(todoId: string): Promise<TodoItem> {
+    async getTodoById(todoId: string, userId:string): Promise<TodoItem> {
 
-            const todoItem = await todoAccess.getTodoById(todoId)
+            const todoItem = await todoAccess.getTodoById(todoId,userId)
 
             console.log('BUISNESSLAYER getTodoById RESULT', todoItem)
             return todoItem
@@ -52,10 +52,10 @@ export class TodoActivities {
         return todoItems
     }
 
-    async updateTodo(todoId: string, todoRequest: UpdateTodoRequest) {
+    async updateTodo(todoId: string, userId:string, todoRequest: UpdateTodoRequest) {
 
         try {
-            const updatedItem = await todoAccess.updateWithRequest(todoId, todoRequest)
+            const updatedItem = await todoAccess.updateWithRequest(todoId, userId, todoRequest)
             console.log('BUISNESSLAYER UPDATETODO RESULT', updatedItem)
             return updatedItem
         }
@@ -64,13 +64,13 @@ export class TodoActivities {
         }        
     }
 
-    async updateAttachmentUrl(todoId: string, imageId: string) {
+    async updateAttachmentUrl(todoId: string, userId:string,  imageId: string) {
         const attachmentUrl = `https://${this.bucketName}.s3.amazonaws.com/${imageId}`
 
         console.log('BUSINESSLAYER UPDATEATTACHMENTURL URL:', attachmentUrl)
 
         try {
-            const updatedItem = await todoAccess.updateAttachmentUrl(todoId, attachmentUrl)
+            const updatedItem = await todoAccess.updateAttachmentUrl(todoId, userId, attachmentUrl)
             console.log('BUISNESSLAYER updateAttachmentUrl RESULT', updatedItem)
             return updatedItem
         }

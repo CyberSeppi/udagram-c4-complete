@@ -44,11 +44,12 @@ export class TodoAccess {
     return result.Items as TodoItem[]
   }
 
-  async getTodoById(todoId: string): Promise<TodoItem> {
+  async getTodoById(todoId: string, userId: string): Promise<TodoItem> {
 
     const params = {
       Key: {
-        todoId: todoId
+        todoId: todoId,
+        userId: userId
       },
       TableName: this.todoTable
     }
@@ -78,11 +79,12 @@ export class TodoAccess {
     return result
   }
 
-  async updateWithRequest(todoId: string, todoUpdateRequest: UpdateTodoRequest) {
+  async updateWithRequest(todoId: string, userId:string, todoUpdateRequest: UpdateTodoRequest) {
     const params = {
       TableName: this.todoTable,
       Key: {
-        todoId: todoId
+        todoId: todoId,
+        userId: userId
       },
       UpdateExpression: 'set #namefield = :name, dueDate = :dueDate, done = :done',
       ExpressionAttributeValues: {
@@ -110,11 +112,12 @@ export class TodoAccess {
 
 
   }
-  async updateAttachmentUrl(todoId: string, attachmentUrl: string) {
+  async updateAttachmentUrl(todoId: string, userId:string, attachmentUrl: string) {
     const params = {
       TableName: this.todoTable,
       Key: {
-        todoId: todoId
+        todoId: todoId,
+        userId: userId
       },
       UpdateExpression: 'set attachmentUrl = :attachmentUrl',
       ExpressionAttributeValues: {
